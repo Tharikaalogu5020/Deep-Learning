@@ -1,0 +1,54 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# Dummy user-movie rating matrix (1=liked, 0=not rated/disliked)
+data = torch.tensor([
+    [1, 1, 0, 0, 1],
+    [0, 1, 1, 0, 0],
+    [1, 0, 0, 1, 1],
+    [0, 0, 1, 1, 0]
+], dtype=torch.float)
+
+class RBM(nn.Module):
+    def __init__(self, n_vis, n_hid):
+        super(RBM, self).__init__()
+        self.W = nn.Parameter(torch.randn(n_hid, n_vis) * 0.1)
+        self.h_bias = nn.Parameter(torch.zeros(n_hid))
+        self.v_bias = nn.Parameter(torch.zeros(n_vis))
+
+    def sample_from_p(self, p):
+        return torch.bernoulli(p)
+
+    def v_to_h(self, v):
+        p_h = torch.sigmoid(torch.matmul(v, self.W.t()) + self.h_bias)
+        return p_h, self.sample_from_p(p_h)
+
+    def h_to_v(self, h):
+        p_v = torch.sigmoid(torch.matmul(h, self.W) + self.v_bias)
+        return p_v, self.sample_from_p(p_v)
+
+    def forward(self, v):
+        p_h, h = self.v_to_h(v)
+        p_v, v_sample = self.h_to_v(h)
+        return v, v_sample
+
+rbm = RBM(n_vis=5, n_hid=3)
+optimizer = optim.SGD(rbm.parameters(), lr=0.1)
+
+# Training loop
+for epoch in range(100):
+    v0 = data
+    v, v1 = rbm(v0)
+    loss = torch.mean((v0 - v1) ** 2)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    if epoch % 20 == 0:
+        print(f"Epoch {epoch}: loss = {loss.item():.4f}")
+
+# Recommend movies for first user (example)
+user = data[0].unsqueeze(0)
+_, h = rbm.v_to_h(user)
+prob_v, _ = rbm.h_to_v(h)
+print("Movie recommendation scores:", prob_v.detach().numpy())
