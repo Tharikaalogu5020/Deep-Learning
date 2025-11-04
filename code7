@@ -1,0 +1,18 @@
+import random
+text = "hello world "
+def build_model(text):
+    model = {}
+    for i in range(len(text) - 1):
+        ch, next_ch = text[i], text[i + 1]
+        model.setdefault(ch, []).append(next_ch)
+    return model
+def generate_text(model, start_char, length=20):
+    output = start_char
+    current = start_char
+    for _ in range(length):
+        next_chars = model.get(current, [' '])
+        current = random.choice(next_chars)
+        output += current
+    return output
+model = build_model(text)
+print("Generated text:\n", generate_text(model, 'h'))
