@@ -1,0 +1,10 @@
+def speech_to_text(audio_wave):
+    mock_database = {
+        "beep1": "hello",
+        "beep2": "turn on the light",
+        "beep3": "what's the weather"
+    }
+    return mock_database.get(audio_wave, "unrecognized speech")
+
+audio_input = "beep2"
+print("Recognized text:", speech_to_text(audio_input))
